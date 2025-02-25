@@ -15,5 +15,6 @@ namespace Gauniv.Client.ViewModel
 {
     public partial class IndexViewModel: ObservableObject
     {
+       
     }
 }
