@@ -10,6 +10,10 @@ namespace Gauniv.WebServer.Data
             : base(options)
         {
         }
+
         public DbSet<Game> Games { get; set; }
+
+        // Add this line
+        public DbSet<Category> Categories { get; set; }
     }
 }

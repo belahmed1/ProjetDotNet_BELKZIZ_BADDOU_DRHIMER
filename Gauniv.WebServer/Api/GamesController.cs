@@ -1,15 +1,10 @@
 ﻿using AutoMapper;
 using Gauniv.WebServer.Data;
 using Gauniv.WebServer.Dtos;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
-using System.Text;
-using CommunityToolkit.HighPerformance.Memory;
-using CommunityToolkit.HighPerformance;
 using Microsoft.AspNetCore.Authorization;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Gauniv.WebServer.Api
 {
@@ -17,8 +12,167 @@ namespace Gauniv.WebServer.Api
     [ApiController]
     public class GamesController(ApplicationDbContext appDbContext, IMapper mapper, UserManager<User> userManager) : ControllerBase
     {
-        private readonly ApplicationDbContext appDbContext = appDbContext;
-        private readonly IMapper mapper = mapper;
-        private readonly UserManager<User> userManager = userManager;
+        // Private fields
+        private readonly ApplicationDbContext _appDbContext = appDbContext;
+        private readonly IMapper _mapper = mapper;
+        private readonly UserManager<User> _userManager = userManager;
+
+        // GET: api/1.0.0/Games/List
+        [HttpGet]
+        public async Task<IActionResult> List([FromQuery] int offset = 0, [FromQuery] int limit = 10, [FromQuery] int? category = null)
+        {
+            var query = _appDbContext.Games.Include(g => g.Categories).AsQueryable();
+
+            if (category.HasValue)
+            {
+                query = query.Where(g => g.Categories.Any(c => c.Id == category.Value));
+            }
+
+            var games = await query.Skip(offset).Take(limit).ToListAsync();
+            var gameDtos = _mapper.Map<List<GameDto>>(games);
+            return Ok(gameDtos);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> MyGames()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var user = await _userManager.Users
+                .Include(u => u.PurchasedGames)
+                    .ThenInclude(g => g.Categories)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var gameDtos = _mapper.Map<List<GameDto>>(user.PurchasedGames);
+            return Ok(gameDtos);
+        }
+
+        [Authorize]
+        [HttpPost("{gameId}")]
+        public async Task<IActionResult> Purchase(int gameId)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var user = await _userManager.Users
+                .Include(u => u.PurchasedGames)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var game = await _appDbContext.Games
+                .Include(g => g.PurchasedBy)
+                .FirstOrDefaultAsync(g => g.Id == gameId);
+
+            if (game == null)
+            {
+                return NotFound("Game not found.");
+            }
+
+            if (!user.PurchasedGames.Any(g => g.Id == gameId))
+            {
+                user.PurchasedGames.Add(game);
+                game.PurchasedBy.Add(user);
+                await _appDbContext.SaveChangesAsync();
+            }
+
+            return NoContent();
+        }
+
+        // GET: api/1.0.0/Games/Get/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            var game = await _appDbContext.Games
+                .Include(g => g.Categories)
+                .FirstOrDefaultAsync(g => g.Id == id);
+
+            if (game == null)
+            {
+                return NotFound();
+            }
+
+            var gameDto = _mapper.Map<GameDto>(game);
+            return Ok(gameDto);
+        }
+
+        // GET: api/1.0.0/Games/Download/5
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Download(int id)
+        {
+            var game = await _appDbContext.Games.FirstOrDefaultAsync(g => g.Id == id);
+            if (game == null)
+            {
+                return NotFound("Game not found.");
+            }
+
+            var filePath = game.PayloadPath;
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound("File not found.");
+            }
+
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var contentType = "application/octet-stream";
+            var fileName = System.IO.Path.GetFileName(filePath);
+
+            return File(stream, contentType, fileName);
+        }
+
+        // POST: api/1.0.0/Games/Create (Admin only)
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] GameDto dto)
+        {
+            var game = _mapper.Map<Game>(dto);
+            _appDbContext.Games.Add(game);
+            await _appDbContext.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(Get), new { id = game.Id }, _mapper.Map<GameDto>(game));
+        }
+
+        // PUT: api/1.0.0/Games/Update/5 (Admin only)
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(int id, [FromBody] GameDto dto)
+        {
+            var game = await _appDbContext.Games
+                .Include(g => g.Categories)
+                .FirstOrDefaultAsync(g => g.Id == id);
+
+            if (game == null)
+            {
+                return NotFound();
+            }
+
+            _mapper.Map(dto, game);
+            await _appDbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // DELETE: api/1.0.0/Games/Delete/5 (Admin only)
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var game = await _appDbContext.Games.FindAsync(id);
+            if (game == null)
+            {
+                return NotFound();
+            }
+
+            _appDbContext.Games.Remove(game);
+            await _appDbContext.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }
