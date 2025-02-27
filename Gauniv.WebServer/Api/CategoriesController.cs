@@ -43,10 +43,34 @@ namespace Gauniv.WebServer.Api
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CategoryDto dto)
         {
-            var category = _mapper.Map<Category>(dto);
+            // Si l'ID est > 0, on vérifie qu'il n'existe pas déjà
+            if (dto.Id > 0)
+            {
+                var existingCat = await _appDbContext.Categories.FindAsync(dto.Id);
+                if (existingCat != null)
+                {
+                    // Conflit : la catégorie existe déjà
+                    return Conflict($"La catégorie avec l'ID {dto.Id} existe déjà.");
+                }
+            }
+
+            // On crée la nouvelle catégorie
+            var category = new Category
+            {
+                Name = dto.Name
+                // vous pouvez mapper d'autres champs si nécessaire
+            };
+
             _appDbContext.Categories.Add(category);
             await _appDbContext.SaveChangesAsync();
-            return CreatedAtAction(nameof(Get), new { id = category.Id }, _mapper.Map<CategoryDto>(category));
+
+            // On retourne la catégorie créée
+            var resultDto = new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
+            return CreatedAtAction(nameof(Get), new { id = category.Id }, resultDto);
         }
 
         // PUT: api/1.0.0/Categories/Update/5
