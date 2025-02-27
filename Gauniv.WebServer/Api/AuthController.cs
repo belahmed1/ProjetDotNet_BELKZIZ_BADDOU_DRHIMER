@@ -23,7 +23,6 @@ namespace Gauniv.WebServer.Api
 
         #region Register Endpoint
 
-        // DTO pour la requête de création d’utilisateur
         public class RegisterRequest
         {
             public string Username { get; set; }
@@ -40,12 +39,12 @@ namespace Gauniv.WebServer.Api
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Vérifie si un utilisateur avec le même Username existe déjà
+            // Check if a user with the same username exists
             var existingUser = await _userManager.FindByNameAsync(request.Username);
             if (existingUser != null)
                 return BadRequest("Username already taken.");
 
-            // Crée un nouvel utilisateur
+            // Create a new user
             var user = new User
             {
                 UserName = request.Username,
@@ -57,9 +56,11 @@ namespace Gauniv.WebServer.Api
             var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
             {
-                // Retourne les erreurs d'Identity (ex. mot de passe non conforme, etc.)
                 return BadRequest(result.Errors);
             }
+
+            // Assign the "User" role by default
+            await _userManager.AddToRoleAsync(user, "User");
 
             return Ok("User created successfully.");
         }
@@ -68,7 +69,6 @@ namespace Gauniv.WebServer.Api
 
         #region Login Endpoint
 
-        // DTO pour la requête de login
         public class LoginRequest
         {
             public string Username { get; set; }
@@ -82,18 +82,16 @@ namespace Gauniv.WebServer.Api
             if (!ModelState.IsValid)
                 return BadRequest("Invalid request.");
 
-            // Recherche l'utilisateur par son Username
             var user = await _userManager.FindByNameAsync(request.Username);
             if (user == null)
                 return Unauthorized("User does not exist.");
 
-            // Vérifie le mot de passe
             var checkPassword = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!checkPassword)
                 return Unauthorized("Incorrect password.");
 
-            // Génère le token JWT
-            var token = GenerateJwtToken(user);
+            // Generate JWT (including role claims)
+            var token = await GenerateJwtTokenAsync(user);
             return Ok(new { token });
         }
 
@@ -101,23 +99,33 @@ namespace Gauniv.WebServer.Api
 
         #region JWT Generation
 
-        // Méthode interne pour générer le token JWT
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtTokenAsync(User user)
         {
-            // Récupère la clé secrète depuis appsettings.json (section "Jwt:Secret")
             var secretKey = _configuration["Jwt:Secret"];
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new InvalidOperationException("JWT secret is not configured properly.");
+            }
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Crée les claims (identifiant, nom d'utilisateur, etc.)
+            // Create claims (include user roles)
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(ClaimTypes.Name, user.UserName),
             };
 
+            // Retrieve roles from the database
+            var roles = await _userManager.GetRolesAsync(user);
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
             var token = new JwtSecurityToken(
-                // Vous pouvez ajouter Issuer et Audience ici si nécessaire
+                // Optional: issuer, audience
                 expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: creds,
                 claims: claims

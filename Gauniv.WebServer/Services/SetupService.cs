@@ -1,48 +1,76 @@
 ﻿using Gauniv.WebServer.Data;
-using Gauniv.WebServer.Websocket;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using System.Text;
 
 namespace Gauniv.WebServer.Services
 {
     public class SetupService : IHostedService
     {
-        private ApplicationDbContext? applicationDbContext;
-        private readonly IServiceProvider serviceProvider;
-        private Task? task;
+        private readonly IServiceProvider _serviceProvider;
 
         public SetupService(IServiceProvider serviceProvider)
         {
-            this.serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            using (var scope = serviceProvider.CreateScope()) // this will use `IServiceScopeFactory` internally
+            using var scope = _serviceProvider.CreateScope();
+
+            // Resolve your services
+            var applicationDbContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+
+            if (applicationDbContext == null)
             {
-                applicationDbContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
-
-                if(applicationDbContext is null)
-                {
-                    throw new Exception("ApplicationDbContext is null");
-                }
-
-                if (applicationDbContext.Database.GetPendingMigrations().Any())
-                {
-                    applicationDbContext.Database.Migrate();
-                }
-
-                // Ajouter ici les données que vous insérer dans votre DB au démarrage
-
-                return Task.CompletedTask;
+                throw new Exception("ApplicationDbContext is null");
             }
+
+            // 1) Migrate the database if there are pending migrations
+            if (applicationDbContext.Database.GetPendingMigrations().Any())
+            {
+                applicationDbContext.Database.Migrate();
+            }
+
+            // 2) Ensure the Admin and User roles exist
+            if (!await roleManager.RoleExistsAsync("Admin"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            }
+            if (!await roleManager.RoleExistsAsync("User"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            // 3) (Optional) Seed a default admin user
+            //    If you already have an admin user, you can skip this step.
+            var existingAdmin = await userManager.FindByNameAsync("admin");
+            if (existingAdmin == null)
+            {
+                var adminUser = new User
+                {
+                    UserName = "admin",
+                    Email = "admin@example.com",
+                    FirstName = "Default",
+                    LastName = "Admin"
+                };
+
+                // Choose a strong password in real scenarios
+                var createAdminResult = await userManager.CreateAsync(adminUser, "AdminPassword123!");
+
+                if (createAdminResult.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+            }
+
+            // Done
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            // Nothing special to do on stop
             return Task.CompletedTask;
         }
     }

@@ -34,10 +34,13 @@
     <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.9.0" />
     <PackageReference Include="X.PagedList.Mvc.Core" Version="10.5.3" />
+
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Migrations\" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
   </ItemGroup>
+  
 
 </Project>

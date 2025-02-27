@@ -22,20 +22,23 @@ namespace Gauniv.WebServer.Api
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            // Retrieve all users along with an "Online" flag based on OnlineHub's ConnectedUsers dictionary.
-            var users = await _dbContext.Users
-                .Select(u => new
-                {
-                    u.Id,
-                    u.UserName,
-                    u.FirstName,
-                    u.LastName,
-                    // Check if the user is in the ConnectedUsers dictionary.
-                    Online = OnlineHub.ConnectedUsers.Values.Any(status => status.User != null && status.User.Id == u.Id)
-                })
-                .ToListAsync();
+            // 1. Fetch users from the DB
+            var users = await _dbContext.Users.ToListAsync();
 
-            return Ok(users);
+            // 2. Do the "online check" in memory
+            var result = users.Select(u => new
+            {
+                u.Id,
+                u.UserName,
+                u.FirstName,
+                u.LastName,
+                Online = OnlineHub.ConnectedUsers.Values.Any(status => status.User?.Id == u.Id)
+            })
+            .ToList();
+
+            // 3. Return the final result
+            return Ok(result);
         }
+
     }
 }

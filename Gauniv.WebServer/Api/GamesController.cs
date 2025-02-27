@@ -128,36 +128,78 @@ namespace Gauniv.WebServer.Api
             return File(stream, contentType, fileName);
         }
 
-        // POST: api/1.0.0/Games/Create (Admin only)
+        // POST:     (Admin only)
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] GameDto dto)
         {
-            var game = _mapper.Map<Game>(dto);
+            // On crée l'entité Game, mais on gère manuellement les catégories
+            var game = new Game
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Price = dto.Price,
+                PayloadPath = dto.PayloadPath,
+                // on initialise la liste de catégories plus bas
+            };
+
+            // Liste de catégories à associer
+            var categories = new List<Category>();
+
+            foreach (var catDto in dto.Categories)
+            {
+                if (catDto.Id > 0)
+                {
+                    // On cherche la catégorie existante
+                    var existingCat = await _appDbContext.Categories.FindAsync(catDto.Id);
+                    if (existingCat == null)
+                    {
+                        // L'ID est > 0 mais la catégorie n'existe pas : conflit ou erreur
+                        return BadRequest($"La catégorie {catDto.Id} n'existe pas en base.");
+                    }
+
+                    // On réutilise la catégorie existante
+                    categories.Add(existingCat);
+                }
+                else
+                {
+                    // Id == 0 => on considère que c'est une nouvelle catégorie
+                    var newCat = new Category
+                    {
+                        Name = catDto.Name
+                    };
+                    // EFCore générera un Id auto-incrémenté
+                    _appDbContext.Categories.Add(newCat);
+                    categories.Add(newCat);
+                }
+            }
+
+            // On associe la liste de catégories au Game
+            game.Categories = categories;
+
+            // On enregistre le jeu
             _appDbContext.Games.Add(game);
             await _appDbContext.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(Get), new { id = game.Id }, _mapper.Map<GameDto>(game));
-        }
-
-        // PUT: api/1.0.0/Games/Update/5 (Admin only)
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Update(int id, [FromBody] GameDto dto)
-        {
-            var game = await _appDbContext.Games
-                .Include(g => g.Categories)
-                .FirstOrDefaultAsync(g => g.Id == id);
-
-            if (game == null)
+            // Optionnel : on peut mapper le résultat en GameDto pour le retour
+            var resultDto = new GameDto
             {
-                return NotFound();
-            }
+                Id = game.Id,
+                Name = game.Name,
+                Description = game.Description,
+                Price = game.Price,
+                PayloadPath = game.PayloadPath,
+                Categories = game.Categories.Select(c => new CategoryDto
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                }).ToList()
+            };
 
-            _mapper.Map(dto, game);
-            await _appDbContext.SaveChangesAsync();
-            return NoContent();
+            return CreatedAtAction(nameof(Get), new { id = game.Id }, resultDto);
         }
+
+
 
         // DELETE: api/1.0.0/Games/Delete/5 (Admin only)
         [HttpDelete("{id}")]
