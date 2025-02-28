@@ -1,6 +1,4 @@
 ﻿using System.Net.Http.Json;
-using System.Text.Json;
-using Gauniv.Client.Services;
 using Gauniv.WebServer.Dtos;
 
 namespace Gauniv.Client.Services
@@ -15,29 +13,39 @@ namespace Gauniv.Client.Services
         }
 
         /// <summary>
-        /// Récupère la liste de tous les jeux disponibles, avec pagination et filtres éventuels
+        /// Retrieves all available games, with optional pagination and category filtering.
         /// </summary>
-        public async Task<List<GameDto>> GetAllGamesAsync(int offset = 0, int limit = 10)
+        public async Task<List<GameDto>> GetAllGamesAsync(int offset = 0, int limit = 10, string? category = null)
         {
-            // Ajustez l’URL selon votre API. Par exemple : https://localhost:7209/game?offset=0&limit=10
+            // Build the URL. If your API supports filtering by category, you can uncomment the following lines.
             var url = $"https://localhost:7209/game?offset={offset}&limit={limit}";
+            // If your backend supports it, you might add:
+            // if (!string.IsNullOrEmpty(category) && category != "All")
+            // {
+            //     url += $"&category={category}";
+            // }
 
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
-            // Suppose que l’API renvoie une liste JSON de GameDto
             var games = await response.Content.ReadFromJsonAsync<List<GameDto>>();
-            return games ?? new List<GameDto>();
+            games ??= new List<GameDto>();
+
+            // Client-side filtering if a category is provided (and it's not "All")
+            if (!string.IsNullOrEmpty(category) && category != "All")
+            {
+                games = games.FindAll(g => g.Categories.Exists(c => c.Name.Equals(category, System.StringComparison.OrdinalIgnoreCase)));
+            }
+
+            return games;
         }
 
         /// <summary>
-        /// Récupère la liste des jeux possédés par l’utilisateur connecté
+        /// Retrieves the list of games owned by the connected user.
         /// </summary>
         public async Task<List<GameDto>> GetOwnedGamesAsync(int offset = 0, int limit = 10)
         {
-            // Endpoint : /game/owned
             var url = $"https://localhost:7209/game/owned?offset={offset}&limit={limit}";
-
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -46,7 +54,7 @@ namespace Gauniv.Client.Services
         }
 
         /// <summary>
-        /// Récupère le détail d’un jeu
+        /// Retrieves the details of a game.
         /// </summary>
         public async Task<GameDto?> GetGameDetailsAsync(int gameId)
         {
@@ -56,7 +64,5 @@ namespace Gauniv.Client.Services
 
             return await response.Content.ReadFromJsonAsync<GameDto>();
         }
-
-        // Vous pourrez rajouter d’autres méthodes : DownloadGame, DeleteGame, etc.
     }
 }

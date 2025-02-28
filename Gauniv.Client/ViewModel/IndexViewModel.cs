@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Gauniv.Client.Pages;
 using Gauniv.Client.Services;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Gauniv.WebServer.Dtos;
+using System.Collections.Generic;
+using Gauniv.Client.Pages;
 
 namespace Gauniv.Client.ViewModel
 {
@@ -12,8 +13,17 @@ namespace Gauniv.Client.ViewModel
     {
         private readonly ApiService _apiService = new ApiService();
 
+        // Collection of all loaded games
         [ObservableProperty]
         private ObservableCollection<GameDto> games = new();
+
+        // List of categories to display in the dropdown
+        [ObservableProperty]
+        private ObservableCollection<string> availableCategories = new();
+
+        // Currently selected category in the dropdown
+        [ObservableProperty]
+        private string selectedCategory = "All";
 
         [ObservableProperty]
         private int offset = 0;
@@ -21,42 +31,82 @@ namespace Gauniv.Client.ViewModel
         [ObservableProperty]
         private int limit = 10;
 
+        [ObservableProperty]
+        private bool isLoading = false;
+
         public IndexViewModel()
         {
-            // Optionnel : Charger dès le constructeur
-            LoadGamesCommand.Execute(null);
-            Games = new ObservableCollection<GameDto>
-            {
-                new GameDto { Name = "Game 1", Description = "Description 1" },
-                new GameDto { Name = "Game 2", Description = "Description 2" }
-            };
+            // Load categories (hard-coded for now)
+            LoadCategories();
+            // Load games initially
+            LoadGamesAsync().ConfigureAwait(false);
+        }
+
+        // Hard-code some categories for demonstration
+        private void LoadCategories()
+        {
+            AvailableCategories.Clear();
+            AvailableCategories.Add("All");
+            AvailableCategories.Add("Action");
+            AvailableCategories.Add("Adventure");
+            AvailableCategories.Add("RPG");
+            AvailableCategories.Add("Strategy");
+            AvailableCategories.Add("fantasy");
+            // Add more categories as needed
+        }
+
+        // Called automatically when SelectedCategory changes (CommunityToolkit MVVM feature)
+        partial void OnSelectedCategoryChanged(string value)
+        {
+            // Reset pagination and clear the list before reloading
+            Offset = 0;
+            Games.Clear();
+            LoadGamesAsync().ConfigureAwait(false);
         }
 
         [RelayCommand]
         private async Task LoadGamesAsync()
         {
+            if (isLoading) return;
+            isLoading = true;
+
             try
             {
-                var list = await _apiService.GetAllGamesAsync(Offset, Limit);
-                Games.Clear();
+                // Pass the selected category to the API call
+                var list = await _apiService.GetAllGamesAsync(offset, limit, selectedCategory);
+                if (offset == 0)
+                {
+                    Games.Clear();
+                }
+
                 foreach (var g in list)
                 {
                     Games.Add(g);
                 }
+
+                offset += limit; // Move pagination forward
             }
             catch (Exception ex)
             {
-                // Gérer l’erreur (popup, log, etc.)
+                // Log or display an error message as needed
+            }
+            finally
+            {
+                isLoading = false;
             }
         }
 
-        // Pour naviguer vers les détails d’un jeu sélectionné
+        [RelayCommand]
+        private void LoadMoreGames()
+        {
+            LoadGamesAsync().ConfigureAwait(false);
+        }
+
         [RelayCommand]
         private void GoToGameDetails(GameDto selectedGame)
         {
             if (selectedGame == null) return;
 
-            // On peut passer l’ID du jeu comme paramètre
             var args = new Dictionary<string, object>
             {
                 { "GameId", selectedGame.Id }

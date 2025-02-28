@@ -130,7 +130,7 @@ namespace Gauniv.WebServer.Api
 
         // POST:     (Admin only)
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] GameDto dto)
         {
             // On crée l'entité Game, mais on gère manuellement les catégories
@@ -203,7 +203,7 @@ namespace Gauniv.WebServer.Api
 
         // DELETE: api/1.0.0/Games/Delete/5 (Admin only)
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var game = await _appDbContext.Games.FindAsync(id);

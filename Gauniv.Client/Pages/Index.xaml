@@ -3,15 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Gauniv.Client.ViewModel"
              xmlns:services="clr-namespace:Gauniv.WebServer.Dtos"
-
-
              x:Class="Gauniv.Client.Pages.Index"
              x:DataType="vm:IndexViewModel">
 
     <VerticalStackLayout Padding="10">
-        <Button Text="Charger les jeux" Command="{Binding LoadGamesCommand}" />
 
-        <CollectionView ItemsSource="{Binding Games}">
+        <!-- Filter: Category -->
+        <Label Text="Filter by Category:" FontSize="Medium" />
+        <Picker ItemsSource="{Binding AvailableCategories}"
+                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" />
+
+        <!-- Button to manually refresh games if needed -->
+        <Button Text="Load / Refresh Games" Command="{Binding LoadGamesCommand}" />
+
+        <!-- Game List -->
+        <CollectionView ItemsSource="{Binding Games}"
+                        RemainingItemsThreshold="3"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreGamesCommand}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="services:GameDto">
                     <VerticalStackLayout Spacing="5" Padding="5" BackgroundColor="LightGray">
@@ -24,5 +32,10 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <!-- 'Load More' button (optional if using RemainingItemsThreshold) -->
+        <Button Text="Load More" Command="{Binding LoadMoreGamesCommand}" 
+                IsVisible="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}" />
+
     </VerticalStackLayout>
 </ContentPage>

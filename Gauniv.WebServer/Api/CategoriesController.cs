@@ -40,7 +40,7 @@ namespace Gauniv.WebServer.Api
 
         // POST: api/1.0.0/Categories/Create
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CategoryDto dto)
         {
             // Si l'ID est > 0, on vérifie qu'il n'existe pas déjà
@@ -75,7 +75,7 @@ namespace Gauniv.WebServer.Api
 
         // PUT: api/1.0.0/Categories/Update/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] CategoryDto dto)
         {
             var category = await _appDbContext.Categories.FindAsync(id);
@@ -90,7 +90,7 @@ namespace Gauniv.WebServer.Api
 
         // DELETE: api/1.0.0/Categories/Delete/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var category = await _appDbContext.Categories.FindAsync(id);

@@ -1,11 +1,33 @@
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:Gauniv.Client.ViewModel"
-    x:Class="Gauniv.Client.Pages.MyGamesPage">
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Gauniv.Client.ViewModel"
+             x:Class="Gauniv.Client.Pages.MyGamesPage"
+             x:DataType="vm:MyGamesViewModel">
 
     <VerticalStackLayout>
-        <!-- UI Elements -->
-    </VerticalStackLayout>
+        <Label Text="Filter by Category:" FontSize="Medium" />
+        <Picker ItemsSource="{Binding AvailableCategories}" 
+                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" />
 
+        <Label Text="Show Only Free Games:" FontSize="Medium" />
+        <Switch IsToggled="{Binding ShowOnlyFreeGames, Mode=TwoWay}" />
+
+        <CollectionView ItemsSource="{Binding OwnedGames}" RemainingItemsThreshold="5" 
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreOwnedGamesCommand}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame BorderColor="Gray" Padding="10" CornerRadius="5">
+                        <StackLayout>
+                            <Label Text="{Binding Name}" FontSize="Large" FontAttributes="Bold" />
+                            <Label Text="{Binding Description}" FontSize="Small" />
+                            <Button Text="View Details" Command="{Binding Source={x:Reference Page}, Path=BindingContext.GoToGameDetailsCommand}" CommandParameter="{Binding}" />
+                        </StackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Text="Load More" Command="{Binding LoadMoreOwnedGamesCommand}" IsVisible="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}" />
+    </VerticalStackLayout>
 </ContentPage>
