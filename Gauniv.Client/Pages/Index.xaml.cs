@@ -1,9 +1,14 @@
-namespace Gauniv.Client.Pages;
+using Gauniv.Client.ViewModel;
+using Microsoft.Maui.Controls;
 
-public partial class Index : ContentPage
+namespace Gauniv.Client.Pages
 {
-	public Index()
-	{
-		InitializeComponent();
-	}
+    public partial class Index : ContentPage
+    {
+        public Index()
+        {
+            InitializeComponent();
+            BindingContext = new IndexViewModel();
+        }
+    }
 }

@@ -77,7 +77,7 @@ namespace Gauniv.WebServer.Api
 
         // POST: api/1.0.0/Auth/Login
         [HttpPost]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<string>> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Invalid request.");

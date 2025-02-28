@@ -23,6 +23,19 @@ namespace Gauniv.Client.Services
             httpClient = new HttpClient();
             Token = null;
         }
+        partial void OnTokenChanged(string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", value);
+            }
+            else
+            {
+                httpClient.DefaultRequestHeaders.Authorization = null;
+            }
+        }
+
 
         public event Action OnConnected;
 

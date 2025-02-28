@@ -40,6 +40,7 @@
                 </Style.Triggers>
             </Style>
         </FlyoutItem.Style>
-        <ShellContent ContentTemplate="{DataTemplate local:MyGames}" />
+        <ShellContent ContentTemplate="{DataTemplate local:MyGamesPage}" />
+
     </FlyoutItem>
 </Shell>

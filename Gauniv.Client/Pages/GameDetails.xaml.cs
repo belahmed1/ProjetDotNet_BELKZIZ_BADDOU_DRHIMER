@@ -1,9 +1,14 @@
-namespace Gauniv.Client.Pages;
+using Gauniv.Client.ViewModel; 
+using Microsoft.Maui.Controls;
 
-public partial class GameDetails : ContentPage
+namespace Gauniv.Client.Pages
 {
-	public GameDetails()
-	{
-		InitializeComponent();
-	}
+    public partial class GameDetails : ContentPage
+    {
+        public GameDetails()
+        {
+            InitializeComponent();  
+            BindingContext = new GameDetailsViewModel();
+        }
+    }
 }
