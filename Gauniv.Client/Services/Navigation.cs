@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Controls;
+using System.Diagnostics;
 
 namespace Gauniv.Client.Services
 {
-    /// <summary>
-    /// Aucune raison de toucher a quelque chose ici
-    /// </summary>
-    public partial class NavigationService() : ObservableObject
+    public partial class NavigationService : ObservableObject
     {
         public static NavigationService Instance { get; private set; } = new NavigationService();
+
         public bool CanGoBack => App.Current?.MainPage?.Navigation.NavigationStack.Count > 0;
 
         [ObservableProperty]
@@ -22,21 +17,18 @@ namespace Gauniv.Client.Services
         public async void GoBack() => await App.Current.MainPage.Navigation.PopAsync();
 
         /// <summary>
-        /// Permet de changer la page afficher par la <see cref="Frame"/>
+        /// Navigates to a page using Shell. Make sure the route is registered.
         /// </summary>
-        /// <typeparam name="T">Le type du ViewModel a afficher</typeparam>
-        /// <param name="args">les paramètres pour instancier le ViewModel. /!\ votre ViewModel doit avoir un constructeur compatible avec vos paramètres</param>
         public async void Navigate<T>(Dictionary<string, object> args, bool clear = false) where T : ContentPage
         {
-            Routing.RegisterRoute($"{typeof(T).Name}", typeof(T));
-            string t = $"{typeof(T).Name}";
-            if(clear)
+            string route = typeof(T).Name;
+            Routing.RegisterRoute(route, typeof(T));
+            if (clear)
             {
                 await Shell.Current.Navigation.PopToRootAsync();
             }
-            // Si vous avez une exception ici, cela veut dire que le constructeur de votre view model ne correspond pas au paramèetres que vous passez !
-            await Shell.Current.GoToAsync($"{typeof(T).Name}", args);
+            Debug.WriteLine($"Navigating to {route}");
+            await Shell.Current.GoToAsync(route, args);
         }
-
     }
 }

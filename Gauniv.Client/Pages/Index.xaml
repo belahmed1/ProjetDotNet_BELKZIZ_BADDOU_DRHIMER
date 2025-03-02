@@ -1,41 +1,57 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage x:Class="Gauniv.Client.Pages.Index"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Gauniv.Client.ViewModel"
-             xmlns:services="clr-namespace:Gauniv.WebServer.Dtos"
-             x:Class="Gauniv.Client.Pages.Index"
-             x:DataType="vm:IndexViewModel">
+             xmlns:viewModel="clr-namespace:Gauniv.Client.ViewModel"
+             xmlns:dtos="clr-namespace:Gauniv.WebServer.Dtos"
+             xmlns:conv="clr-namespace:Gauniv.Client.Converters">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:DecimalConverter x:Key="DecimalConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
-    <VerticalStackLayout Padding="10">
+    <ContentPage.BindingContext>
+        <viewModel:IndexViewModel />
+    </ContentPage.BindingContext>
 
-        <!-- Filter: Category -->
-        <Label Text="Filter by Category:" FontSize="Medium" />
-        <Picker ItemsSource="{Binding AvailableCategories}"
-                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" />
+    <ScrollView>
+        <StackLayout Padding="10" Spacing="15">
+            <!-- Login Button -->
+            <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
 
-        <!-- Button to manually refresh games if needed -->
-        <Button Text="Load / Refresh Games" Command="{Binding LoadGamesCommand}" />
+            <!-- Category Picker -->
+            <Label Text="Filter by Category:" />
+            <Picker ItemsSource="{Binding AvailableCategories}"
+              SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+              Title="Select Category" />
 
-        <!-- Game List -->
-        <CollectionView ItemsSource="{Binding Games}"
-                        RemainingItemsThreshold="3"
-                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreGamesCommand}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="services:GameDto">
-                    <VerticalStackLayout Spacing="5" Padding="5" BackgroundColor="LightGray">
-                        <Label Text="{Binding Name}" FontSize="Medium" FontAttributes="Bold" />
-                        <Label Text="{Binding Description}" FontSize="Small" />
-                        <Button Text="Détails"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:IndexViewModel}}, Path=GoToGameDetailsCommand}"
-                                CommandParameter="{Binding .}" />
-                    </VerticalStackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+            <!-- Price Filter -->
+            <Label Text="Max Price:" />
+            <Entry Placeholder="Enter max price"
+             Keyboard="Numeric"
+             Text="{Binding MaxPrice, Mode=TwoWay, Converter={StaticResource DecimalConverter}}" />
 
-        <!-- 'Load More' button (optional if using RemainingItemsThreshold) -->
-        <Button Text="Load More" Command="{Binding LoadMoreGamesCommand}" 
-                IsVisible="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}" />
+            <!-- Apply Filter Button -->
+            <Button Text="Apply Filter" Command="{Binding LoadGamesAsyncCommand}" />
 
-    </VerticalStackLayout>
+            <!-- Games List -->
+            <CollectionView ItemsSource="{Binding Games}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dtos:GameDto">
+                        <Frame Padding="10" Margin="5" BorderColor="Gray">
+                            <StackLayout>
+                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                <Label Text="{Binding Description}" />
+                                <Label Text="{Binding Price, StringFormat='Price: {0:C}'}" />
+                            </StackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Load More Button -->
+            <Button Text="Load More" Command="{Binding LoadMoreGamesCommand}" />
+        </StackLayout>
+    </ScrollView>
 </ContentPage>

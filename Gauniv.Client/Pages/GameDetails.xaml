@@ -1,25 +1,56 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewModel="clr-namespace:Gauniv.Client.ViewModel"
+    xmlns:services="clr-namespace:Gauniv.WebServer.Dtos"
+    x:Class="Gauniv.Client.Pages.MyGamesDetails"
+    x:DataType="viewModel:MyGamesViewModel">
 
-    xmlns:vm="clr-namespace:Gauniv.Client.ViewModel"
 
-             x:Class="Gauniv.Client.Pages.GameDetails"
-             x:DataType="vm:GameDetailsViewModel">
+    <VerticalStackLayout Padding="10">
+        <!-- Filter Section -->
+        <Label Text="Filtrer par catégorie:" FontSize="Medium" />
+        <Picker ItemsSource="{Binding AvailableCategories}"
+                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" />
 
-    <VerticalStackLayout Padding="20">
-        <Label Text="Game Details Page" 
-               FontSize="24" 
-               FontAttributes="Bold" 
-               HorizontalOptions="Center" />
+        <Label Text="Filtrer par prix (max):" FontSize="Medium" />
+        <Entry Placeholder="0 pour aucun filtre"
+               Keyboard="Numeric"
+               Text="{Binding MaxPrice, Mode=TwoWay}" />
 
-        <Label Text="{Binding SelectedGame.Name}" 
-               FontSize="18" 
-               FontAttributes="Bold" />
-        <Label Text="{Binding SelectedGame.Description}" 
-               FontSize="14" 
-               TextColor="Gray" />
+        <!-- Refresh Button -->
+        <Button Text="Charger / Actualiser les jeux possédés"
+                Command="{Binding LoadOwnedGamesCommand}" />
 
+        <!-- Wrap the CollectionView in a ScrollView to force a persistent scrollbar -->
+        <ScrollView VerticalScrollBarVisibility="Always">
+            <CollectionView ItemsSource="{Binding OwnedGames}"
+                            RemainingItemsThreshold="3"
+                            RemainingItemsThresholdReachedCommand="{Binding LoadMoreOwnedGamesCommand}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="services:GameDto">
+                        <Frame BorderColor="Gray" Padding="10" CornerRadius="5">
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{Binding Name}" FontSize="Large" FontAttributes="Bold" />
+                                <Label Text="{Binding Description}" FontSize="Small" />
+                                <Label Text="{Binding Price, StringFormat='Prix: {0:C}'}" FontSize="Small" />
+                                <!-- Display categories using a converter -->
+                                <Label Text="{Binding Categories, Converter={StaticResource CategoriesToStringConverter}}" 
+                                       FontSize="Small" />
+                                <Button Text="Détails"
+                                Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.GoToGameDetailsCommand}"
+                                CommandParameter="{Binding .}" />
+
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+
+        <!-- Optional Load More Button -->
+        <Button Text="Charger plus" Command="{Binding LoadMoreOwnedGamesCommand}" 
+                IsVisible="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}" />
     </VerticalStackLayout>
-
 </ContentPage>

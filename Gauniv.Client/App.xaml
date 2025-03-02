@@ -14,6 +14,8 @@
 
             <!-- Custom Converters -->
             <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <converters:CategoriesToStringConverter x:Key="CategoriesToStringConverter" />
+            <converters:DecimalConverter x:Key="DecimalConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

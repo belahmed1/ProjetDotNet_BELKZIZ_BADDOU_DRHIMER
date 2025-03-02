@@ -1,5 +1,5 @@
-using Gauniv.Client.ViewModel;
 using Microsoft.Maui.Controls;
+using Gauniv.Client.ViewModel;
 
 namespace Gauniv.Client.Pages
 {
@@ -8,7 +8,15 @@ namespace Gauniv.Client.Pages
         public Index()
         {
             InitializeComponent();
-            BindingContext = new IndexViewModel();
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            if (BindingContext is IndexViewModel vm)
+            {
+                await vm.InitializeAsync();
+            }
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Gauniv.WebServer.Api
 
         // POST: api/1.0.0/Auth/Register
         [HttpPost]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<ActionResult<string>> Register([FromBody] RegisterRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

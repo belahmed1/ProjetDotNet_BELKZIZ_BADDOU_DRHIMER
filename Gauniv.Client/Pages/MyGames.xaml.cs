@@ -1,12 +1,10 @@
-using Gauniv.Client.ViewModel;
-
-namespace Gauniv.Client.Pages;
-
-public partial class MyGamesPage : ContentPage
+namespace Gauniv.Client.Pages
 {
-    public MyGamesPage()
+    public partial class MyGames : ContentPage
     {
-        InitializeComponent();
-        BindingContext = new MyGamesViewModel();
+        public MyGames()
+        {
+            InitializeComponent();
+        }
     }
 }
