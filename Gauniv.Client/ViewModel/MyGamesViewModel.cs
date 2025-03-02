@@ -122,7 +122,7 @@ namespace Gauniv.Client.ViewModel
             {
                 { "GameId", selectedGame.Id }
             };
-            NavigationService.Instance.Navigate<MyGamesDetails>(args);
+            NavigationService.Instance.Navigate<GameDetails>(args);
         }
     }
 }

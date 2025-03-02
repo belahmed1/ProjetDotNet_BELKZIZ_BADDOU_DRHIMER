@@ -1,26 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<ContentPage x:Class="Gauniv.Client.Pages.Index"
+<ContentPage x:Name="RootPage"
+             x:Class="Gauniv.Client.Pages.Index"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModel="clr-namespace:Gauniv.Client.ViewModel"
              xmlns:dtos="clr-namespace:Gauniv.WebServer.Dtos"
              xmlns:conv="clr-namespace:Gauniv.Client.Converters">
+
+    <!-- Resource Dictionary for converters -->
     <ContentPage.Resources>
         <ResourceDictionary>
             <conv:DecimalConverter x:Key="DecimalConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
+    <!-- Bind this page to the IndexViewModel -->
     <ContentPage.BindingContext>
         <viewModel:IndexViewModel />
     </ContentPage.BindingContext>
 
     <ScrollView>
         <StackLayout Padding="10" Spacing="15">
-            <!-- Login Button -->
-            <Button Text="Login" Command="{Binding NavigateToLoginCommand}" />
 
-            <!-- Category Picker -->
+            <!-- Login Button -->
+            <Button Text="Login" 
+              Command="{Binding NavigateToLoginCommand}" />
+
+            <!-- Category Filter -->
             <Label Text="Filter by Category:" />
             <Picker ItemsSource="{Binding AvailableCategories}"
               SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
@@ -33,15 +39,24 @@
              Text="{Binding MaxPrice, Mode=TwoWay, Converter={StaticResource DecimalConverter}}" />
 
             <!-- Apply Filter Button -->
-            <Button Text="Apply Filter" Command="{Binding LoadGamesAsyncCommand}" />
+            <Button Text="Apply Filter" 
+              Command="{Binding LoadGamesAsyncCommand}" />
 
             <!-- Games List -->
             <CollectionView ItemsSource="{Binding Games}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="dtos:GameDto">
                         <Frame Padding="10" Margin="5" BorderColor="Gray">
+
+                            <!-- Tap to navigate to details -->
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.GoToGameDetailsCommand}"
+                                      CommandParameter="{Binding .}" />
+                            </Frame.GestureRecognizers>
+
                             <StackLayout>
-                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                <Label Text="{Binding Name}" 
+                       FontAttributes="Bold" />
                                 <Label Text="{Binding Description}" />
                                 <Label Text="{Binding Price, StringFormat='Price: {0:C}'}" />
                             </StackLayout>
@@ -51,7 +66,9 @@
             </CollectionView>
 
             <!-- Load More Button -->
-            <Button Text="Load More" Command="{Binding LoadMoreGamesCommand}" />
+            <Button Text="Load More" 
+              Command="{Binding LoadMoreGamesCommand}" />
+
         </StackLayout>
     </ScrollView>
 </ContentPage>

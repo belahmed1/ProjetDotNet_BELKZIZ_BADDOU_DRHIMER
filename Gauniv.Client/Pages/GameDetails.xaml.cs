@@ -2,9 +2,9 @@ using Microsoft.Maui.Controls;
 
 namespace Gauniv.Client.Pages
 {
-    public partial class MyGamesDetails : ContentPage
+    public partial class GameDetails : ContentPage
     {
-        public MyGamesDetails()
+        public GameDetails()
         {
             InitializeComponent();
         }

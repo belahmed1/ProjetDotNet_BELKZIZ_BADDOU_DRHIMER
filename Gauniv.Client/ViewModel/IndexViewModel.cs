@@ -144,12 +144,17 @@ namespace Gauniv.Client.ViewModel
         public void GoToGameDetails(GameDto selectedGame)
         {
             if (selectedGame == null) return;
+
+            Debug.WriteLine($"Navigating to game with ID {selectedGame.Id}");
+
             var args = new Dictionary<string, object>
             {
                 { "GameId", selectedGame.Id }
             };
-            NavigationService.Instance.Navigate<MyGamesDetails>(args);
+            NavigationService.Instance.Navigate<GameDetails>(args);
         }
+
+
 
         // Command to navigate to the Login page.
         [RelayCommand]

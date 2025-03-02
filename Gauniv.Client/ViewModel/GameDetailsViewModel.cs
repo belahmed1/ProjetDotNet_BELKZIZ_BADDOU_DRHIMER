@@ -1,10 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Gauniv.Client.Services;
 using Gauniv.WebServer.Dtos;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Gauniv.Client.ViewModel
 {
+    [QueryProperty(nameof(GameId), "GameId")]
     public partial class GameDetailsViewModel : ObservableObject
     {
         private readonly ApiService _apiService = new ApiService();
@@ -12,48 +15,39 @@ namespace Gauniv.Client.ViewModel
         [ObservableProperty]
         private GameDto selectedGame;
 
-        [ObservableProperty]
-        private bool isDownloaded; // Gérer l’état local
+        private int gameId;
+        public int GameId
+        {
+            get => gameId;
+            set
+            {
+                if (SetProperty(ref gameId, value))
+                {
+                    _ = LoadGameDetailsAsync(value);
+                }
+            }
+        }
 
-        [RelayCommand]
-        public async Task LoadGameDetailsAsync(int gameId)
+        private async Task LoadGameDetailsAsync(int id)
         {
             try
             {
-                var game = await _apiService.GetGameDetailsAsync(gameId);
+                Debug.WriteLine($"LoadGameDetailsAsync called with gameId={id}");
+                var game = await _apiService.GetGameDetailsAsync(id);
                 if (game != null)
                 {
                     SelectedGame = game;
-                    // Vérifier si déjà téléchargé
-                    // isDownloaded = ... (vérification locale)
+                    Debug.WriteLine($"Game loaded: {game.Name}");
+                }
+                else
+                {
+                    Debug.WriteLine("No game returned from API.");
                 }
             }
             catch (Exception ex)
             {
-                // Gérer l’erreur
+                Debug.WriteLine($"LoadGameDetailsAsync error: {ex.Message}");
             }
-        }
-
-        [RelayCommand]
-        public async Task DownloadGameAsync()
-        {
-            if (SelectedGame == null) return;
-            // Appel à un endpoint de téléchargement ou
-            // on télécharge le binaire via /game/download/{id}
-            // Ensuite, isDownloaded = true
-        }
-
-        [RelayCommand]
-        public void PlayGame()
-        {
-            if (!IsDownloaded) return;
-            // Lancer un Process.Start(...) ou autre
-        }
-
-        [RelayCommand]
-        public void DeleteGame()
-        {
-            // Supprimer le binaire local, isDownloaded = false
         }
     }
 }

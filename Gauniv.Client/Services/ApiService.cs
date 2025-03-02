@@ -60,12 +60,15 @@ namespace Gauniv.Client.Services
         /// </summary>
         public async Task<GameDto?> GetGameDetailsAsync(int gameId)
         {
-            var url = $"https://localhost:7209/game/{gameId}";
+            // Use the correct endpoint from Swagger:
+            var url = $"https://localhost:7209/api/1.0.0/Games/Get/{gameId}";
             var response = await _httpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+                return null;
 
             return await response.Content.ReadFromJsonAsync<GameDto>();
         }
+
 
         /// <summary>
         /// Retrieves categories from the database.

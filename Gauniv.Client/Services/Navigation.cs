@@ -27,8 +27,9 @@ namespace Gauniv.Client.Services
             {
                 await Shell.Current.Navigation.PopToRootAsync();
             }
-            Debug.WriteLine($"Navigating to {route}");
+            System.Diagnostics.Debug.WriteLine($"Navigating to {route}");
             await Shell.Current.GoToAsync(route, args);
         }
+
     }
 }
