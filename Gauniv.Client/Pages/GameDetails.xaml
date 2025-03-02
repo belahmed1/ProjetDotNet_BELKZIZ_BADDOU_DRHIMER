@@ -4,7 +4,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModel="clr-namespace:Gauniv.Client.ViewModel"
              xmlns:dtos="clr-namespace:Gauniv.WebServer.Dtos"
-             Title="Game Details">
+             xmlns:conv="clr-namespace:Gauniv.Client.Converters"
+             Title="Détails du Jeu">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:InverseBoolConverter x:Key="InverseBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <ContentPage.BindingContext>
         <viewModel:GameDetailsViewModel />
@@ -12,16 +18,14 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="10" Spacing="10">
+            <!-- Display Game Details -->
             <Label Text="{Binding SelectedGame.Name}"
-                   FontSize="Large"
-                   FontAttributes="Bold" />
-
+             FontSize="Large"
+             FontAttributes="Bold" />
             <Label Text="{Binding SelectedGame.Description}" />
-
-            <Label Text="{Binding SelectedGame.Price, StringFormat='Price: {0:C}'}"
-                   FontAttributes="Bold" />
-
-            <Label Text="Categories:" FontAttributes="Bold" />
+            <Label Text="{Binding SelectedGame.Price, StringFormat='Prix : {0:C}'}"
+             FontAttributes="Bold" />
+            <Label Text="Catégories:" FontAttributes="Bold" />
             <CollectionView ItemsSource="{Binding SelectedGame.Categories}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="dtos:CategoryDto">
@@ -29,6 +33,25 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
+
+            <!-- Action Buttons -->
+            <HorizontalStackLayout Spacing="10">
+                <!-- Download button is visible only if game is not downloaded -->
+                <Button Text="Télécharger"
+                Command="{Binding DownloadGameCommand}"
+                IsVisible="{Binding IsDownloaded, Converter={StaticResource InverseBoolConverter}}" />
+
+
+                <!-- Play button visible only if game is downloaded -->
+                <Button Text="Jouer"
+                Command="{Binding PlayGameCommand}"
+                IsVisible="{Binding IsDownloaded}" />
+
+                <!-- Delete button visible only if game is downloaded -->
+                <Button Text="Supprimer"
+                Command="{Binding DeleteGameCommand}"
+                IsVisible="{Binding IsDownloaded}" />
+            </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
